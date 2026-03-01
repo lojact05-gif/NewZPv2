@@ -36,13 +36,29 @@ Name: "{autodesktop}\ZPv2"; Filename: "{app}\ZPv2.Ui.exe"; Tasks: desktopicon
 Name: "desktopicon"; Description: "Criar atalho no desktop"; GroupDescription: "Atalhos:"
 
 [Run]
-Filename: "{sys}\sc.exe"; Parameters: "stop ""ZPv2Service"""; Flags: runhidden waituntilterminated ignoreerrors
-Filename: "{sys}\sc.exe"; Parameters: "create ""ZPv2Service"" binPath= ""{app}\ZPv2.Service.exe"" start= auto DisplayName= ""ZPv2 Service"""; Flags: runhidden waituntilterminated ignoreerrors
-Filename: "{sys}\sc.exe"; Parameters: "config ""ZPv2Service"" binPath= ""{app}\ZPv2.Service.exe"" start= auto DisplayName= ""ZPv2 Service"""; Flags: runhidden waituntilterminated
-Filename: "{sys}\sc.exe"; Parameters: "description ""ZPv2Service"" ""ZPv2 local print service"""; Flags: runhidden waituntilterminated ignoreerrors
-Filename: "{sys}\sc.exe"; Parameters: "start ""ZPv2Service"""; Flags: runhidden waituntilterminated ignoreerrors
+Filename: "{sys}\sc.exe"; Parameters: "stop ""ZPv2Service"""; Flags: runhidden; Check: ZPv2ServiceExists
+Filename: "{sys}\sc.exe"; Parameters: "create ""ZPv2Service"" binPath= ""{app}\ZPv2.Service.exe"" start= auto DisplayName= ""ZPv2 Service"""; Flags: runhidden; Check: not ZPv2ServiceExists
+Filename: "{sys}\sc.exe"; Parameters: "config ""ZPv2Service"" binPath= ""{app}\ZPv2.Service.exe"" start= auto DisplayName= ""ZPv2 Service"""; Flags: runhidden; Check: ZPv2ServiceExists
+Filename: "{sys}\sc.exe"; Parameters: "description ""ZPv2Service"" ""ZPv2 local print service"""; Flags: runhidden
+Filename: "{sys}\sc.exe"; Parameters: "start ""ZPv2Service"""; Flags: runhidden
 Filename: "{app}\ZPv2.Ui.exe"; Description: "Abrir ZPv2"; Flags: nowait postinstall skipifsilent skipifdoesntexist
 
 [UninstallRun]
-Filename: "{sys}\sc.exe"; Parameters: "stop ""ZPv2Service"""; Flags: runhidden ignoreerrors
-Filename: "{sys}\sc.exe"; Parameters: "delete ""ZPv2Service"""; Flags: runhidden ignoreerrors
+Filename: "{sys}\sc.exe"; Parameters: "stop ""ZPv2Service"""; Flags: runhidden; Check: ZPv2ServiceExists
+Filename: "{sys}\sc.exe"; Parameters: "delete ""ZPv2Service"""; Flags: runhidden; Check: ZPv2ServiceExists
+
+[Code]
+function ZPv2ServiceExists: Boolean;
+var
+  ResultCode: Integer;
+begin
+  Result :=
+    Exec(
+      ExpandConstant('{sys}\sc.exe'),
+      'query "ZPv2Service"',
+      '',
+      SW_HIDE,
+      ewWaitUntilTerminated,
+      ResultCode
+    ) and (ResultCode = 0);
+end;
